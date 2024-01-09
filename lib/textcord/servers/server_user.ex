@@ -6,8 +6,9 @@ defmodule Textcord.Servers.ServerUser do
   @foreign_key_type :binary_id
   schema "server_users" do
 
-    field :user_id, :binary_id
-    field :server_id, :binary_id
+    belongs_to :user, Textcord.Accounts.User
+    belongs_to :server, Textcord.Servers.Server
+
 
     timestamps(type: :utc_datetime)
   end
@@ -15,7 +16,7 @@ defmodule Textcord.Servers.ServerUser do
   @doc false
   def changeset(server_user, attrs) do
     server_user
-    |> cast(attrs, [])
-    |> validate_required([])
+    |> cast(attrs, [:user_id, :server_id])
+    |> validate_required([:user_id, :server_id])
   end
 end

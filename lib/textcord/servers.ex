@@ -49,8 +49,9 @@ defmodule Textcord.Servers do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_server(attrs \\ %{}) do
-    %Server{}
+  def create_server(user, attrs \\ %{}) do
+    user
+    |> Ecto.build_assoc(:servers)
     |> Server.changeset(attrs)
     |> Repo.insert()
   end
@@ -145,8 +146,9 @@ defmodule Textcord.Servers do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_server_user(attrs \\ %{}) do
-    %ServerUser{}
+  def create_server_user(user, attrs \\ %{}) do
+    user
+    |> Ecto.build_assoc(:server_users)
     |> ServerUser.changeset(attrs)
     |> Repo.insert()
   end

@@ -5,8 +5,8 @@ defmodule Textcord.Repo.Migrations.CreateMessages do
     create table(:messages, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add :text, :text
-      add :user_id, references(:users, on_delete: :nothing, type: :binary_id)
-      add :channel_id, references(:channels, on_delete: :nothing, type: :binary_id)
+      add :user_id, references(:users, on_delete: :delete_all, type: :binary_id)
+      add :channel_id, references(:channels, on_delete: :delete_all, type: :binary_id)
 
       timestamps(type: :utc_datetime)
     end

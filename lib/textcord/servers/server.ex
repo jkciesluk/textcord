@@ -7,7 +7,9 @@ defmodule Textcord.Servers.Server do
   schema "servers" do
     field :name, :string
     field :description, :string
-    field :user_id, :binary_id
+    belongs_to :user, Textcord.Accounts.User
+    has_many :server_users, Textcord.Servers.ServerUser
+    has_many :channels, Textcord.Channels.Channel
 
     timestamps(type: :utc_datetime)
   end
@@ -15,7 +17,7 @@ defmodule Textcord.Servers.Server do
   @doc false
   def changeset(server, attrs) do
     server
-    |> cast(attrs, [:name, :description])
-    |> validate_required([:name, :description])
+    |> cast(attrs, [:name, :description, :user_id])
+    |> validate_required([:name, :description, :user_id])
   end
 end

@@ -6,7 +6,8 @@ defmodule Textcord.Channels.Channel do
   @foreign_key_type :binary_id
   schema "channels" do
     field :name, :string
-    field :server_id, :binary_id
+    belongs_to :server, Textcord.Servers.Server
+    has_many :messages, Textcord.Messages.Message
 
     timestamps(type: :utc_datetime)
   end
@@ -14,7 +15,7 @@ defmodule Textcord.Channels.Channel do
   @doc false
   def changeset(channel, attrs) do
     channel
-    |> cast(attrs, [:name])
-    |> validate_required([:name])
+    |> cast(attrs, [:name, :server_id])
+    |> validate_required([:name, :server_id])
   end
 end

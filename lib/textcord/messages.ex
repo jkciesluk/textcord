@@ -49,8 +49,9 @@ defmodule Textcord.Messages do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_message(attrs \\ %{}) do
-    %Message{}
+  def create_message(user, attrs \\ %{}) do
+    user
+    |> Ecto.build_assoc(:comments)
     |> Message.changeset(attrs)
     |> Repo.insert()
   end
