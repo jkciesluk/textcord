@@ -69,7 +69,7 @@ defmodule TextcordWeb.ServerLive.FormComponent do
   end
 
   defp save_server(socket, :new, server_params) do
-    case Servers.create_server(server_params) do
+    case Servers.create_server(socket.assigns.current_user, server_params) do
       {:ok, server} ->
         notify_parent({:saved, server})
 
