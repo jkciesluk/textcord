@@ -71,6 +71,8 @@ defmodule TextcordWeb.ServerLive.FormComponent do
   defp save_server(socket, :new, server_params) do
     case Servers.create_server(socket.assigns.current_user, server_params) do
       {:ok, server} ->
+        # Insert admin to server_users
+        Servers.create_server_user(socket.assigns.current_user, %{"server_id" => server.id})
         notify_parent({:saved, server})
 
         {:noreply,
