@@ -6,7 +6,7 @@ defmodule TextcordWeb.ServerLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :servers, Servers.list_servers())}
+    {:ok, stream(socket, :servers, Servers.get_available_servers(socket.assigns.current_user) |> IO.inspect())}
   end
 
   @impl true
@@ -32,8 +32,19 @@ defmodule TextcordWeb.ServerLive.Index do
     |> assign(:server, nil)
   end
 
+  defp apply_action(socket, :join, _params) do
+    socket
+    |> assign(:page_title, "Join Server")
+    |> assign(:server, nil)
+  end
+
   @impl true
   def handle_info({TextcordWeb.ServerLive.FormComponent, {:saved, server}}, socket) do
+    {:noreply, stream_insert(socket, :servers, server)}
+  end
+
+  @impl true
+  def handle_info({TextcordWeb.ServerLive.JoinServer, {:joined, server}}, socket) do
     {:noreply, stream_insert(socket, :servers, server)}
   end
 

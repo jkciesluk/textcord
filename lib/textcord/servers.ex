@@ -199,4 +199,29 @@ defmodule Textcord.Servers do
   def change_server_user(%ServerUser{} = server_user, attrs \\ %{}) do
     ServerUser.changeset(server_user, attrs)
   end
+
+  def get_server_by_name(name) do
+    query = from s in Server,
+      where: s.name == ^name,
+      select: s
+
+    Repo.one(query)
+  end
+
+  def get_available_servers(user) do
+    query = from s in Server,
+      join: su in ServerUser, on: s.id == su.server_id,
+      where: su.user_id == ^user.id,
+      select: s
+
+    Repo.all(query)
+  end
+
+  def is_server_member?(user, server) do
+    query = from su in ServerUser,
+      where: su.user_id == ^user.id and su.server_id == ^server.id,
+      select: su
+
+    Repo.one(query) != nil
+  end
 end

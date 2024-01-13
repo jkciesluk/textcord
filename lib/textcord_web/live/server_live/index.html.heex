@@ -1,6 +1,9 @@
 <.header>
   Listing Servers
   <:actions>
+    <.link patch={~p"/servers/join"}>
+      <.button>Join Server</.button>
+    </.link>  
     <.link patch={~p"/servers/new"}>
       <.button>New Server</.button>
     </.link>
@@ -34,6 +37,19 @@
   <.live_component
     module={TextcordWeb.ServerLive.FormComponent}
     id={@server.id || :new}
+    current_user={@current_user}
+    title={@page_title}
+    action={@live_action}
+    server={@server}
+    patch={~p"/servers"}
+  />
+</.modal>
+
+<.modal :if={@live_action in [:join]} id="server-modal-join" show on_cancel={JS.patch(~p"/servers")}>
+  <.live_component
+    module={TextcordWeb.ServerLive.JoinServer}
+    id={:join}
+    name={""}
     current_user={@current_user}
     title={@page_title}
     action={@live_action}
