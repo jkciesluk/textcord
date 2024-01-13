@@ -21,15 +21,21 @@
     <div class="sr-only">
       <.link navigate={~p"/servers/#{server}"}>Show</.link>
     </div>
-    <.link patch={~p"/servers/#{server}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{_id, server}}>
+    <%= if server.user_id == @current_user.id do %>
+      <.link patch={~p"/servers/#{server}/edit"}>Edit</.link>
+    <% end %>
   </:action>
   <:action :let={{id, server}}>
-    <.link
-      phx-click={JS.push("delete", value: %{id: server.id}) |> hide("##{id}")}
-      data-confirm="Are you sure?"
-    >
-      Delete
-    </.link>
+    <%= if server.user_id == @current_user.id do %>
+      <.link
+        phx-click={JS.push("delete", value: %{id: server.id}) |> hide("##{id}")}
+        data-confirm="Are you sure?"
+      >
+        Delete
+      </.link>
+    <% end %>
   </:action>
 </.table>
 

@@ -224,4 +224,9 @@ defmodule Textcord.Servers do
 
     Repo.one(query) != nil
   end
+
+  def is_server_admin?(user, server_id) do
+    server = get_server!(server_id)
+    server.user_id == user.id
+  end
 end

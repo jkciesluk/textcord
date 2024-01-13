@@ -1,7 +1,7 @@
 <.header>
   Server <%= @server.id %>
   <:subtitle>This is a server record from your database.</:subtitle>
-  <:actions>
+  <:actions :if={@is_admin}>
     <.link patch={~p"/servers/#{@server}/show/edit"} phx-click={JS.push_focus()}>
       <.button>Edit server</.button>
     </.link>

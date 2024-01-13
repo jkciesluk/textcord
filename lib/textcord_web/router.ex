@@ -13,6 +13,11 @@ defmodule TextcordWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :require_admin_user do
+    plug :require_authenticated_user
+    plug :check_admin_user
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end
@@ -70,10 +75,18 @@ defmodule TextcordWeb.Router do
       live "/servers/new", ServerLive.Index, :new
       live "/servers/join", ServerLive.Index, :join
       live "/servers/:id", ServerLive.Show, :show
-      live "/servers/:id/edit", ServerLive.Index, :edit
-      live "/servers/:id/show/edit", ServerLive.Show, :edit
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+    end
+  end
+
+  scope "/servers/:id", TextcordWeb do
+    pipe_through [:browser, :require_admin_user]
+
+    live_session :require_admin_user,
+      on_mount: [{TextcordWeb.UserAuth, :ensure_authenticated}] do
+      live "/edit", ServerLive.Index, :edit
+      live "/show/edit", ServerLive.Show, :edit
     end
   end
 

@@ -11,10 +11,13 @@ defmodule TextcordWeb.ServerLive.Show do
   @impl true
   def handle_params(%{"id" => id}, _, socket) do
     server = Servers.get_server!(id) |> Textcord.Repo.preload(:channels)
+    is_admin = socket.assigns.current_user.id == server.user_id
+
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:server, server)}
+     |> assign(:server, server)
+     |> assign(:is_admin, is_admin)}
   end
 
   defp page_title(:show), do: "Show Server"
