@@ -13,6 +13,13 @@
   <:item title="Description"><%= @server.description %></:item>
 </.list>
 
+<h2>Channels</h2>
+<%= for channel <- @server.channels do %>
+<li><%= channel.name %></li>
+<% end %>
+
+
+
 <.back navigate={~p"/servers"}>Back to servers</.back>
 
 <.modal :if={@live_action == :edit} id="server-modal" show on_cancel={JS.patch(~p"/servers/#{@server}")}>
@@ -23,7 +30,6 @@
     title={@page_title}
     action={@live_action}
     server={@server}
-    channels={@channels}
     patch={~p"/servers/#{@server}"}
   />
 </.modal>
