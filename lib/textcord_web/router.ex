@@ -68,6 +68,8 @@ defmodule TextcordWeb.Router do
       on_mount: [{TextcordWeb.UserAuth, :ensure_authenticated}] do
       live "/servers", ServerLive.Index, :index
       live "/servers/new", ServerLive.Index, :new
+      live "/servers/:id", ServerLive.Index, :show
+      live "/servers/:id/edit", ServerLive.Index, :edit
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
     end

@@ -49,8 +49,8 @@ defmodule Textcord.Channels do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_channel(user, attrs \\ %{}) do
-    user
+  def create_channel(server, attrs \\ %{}) do
+    server
     |> Ecto.build_assoc(:channels)
     |> Channel.changeset(attrs)
     |> Repo.insert()

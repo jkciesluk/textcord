@@ -1,6 +1,7 @@
 defmodule TextcordWeb.ServerLive.FormComponent do
   use TextcordWeb, :live_component
 
+  alias Textcord.Channels
   alias Textcord.Servers
 
   @impl true
@@ -21,6 +22,7 @@ defmodule TextcordWeb.ServerLive.FormComponent do
       >
         <.input field={@form[:name]} type="text" label="Name" />
         <.input field={@form[:description]} type="text" label="Description" />
+
         <:actions>
           <.button phx-disable-with="Saving...">Save Server</.button>
         </:actions>
@@ -73,6 +75,7 @@ defmodule TextcordWeb.ServerLive.FormComponent do
       {:ok, server} ->
         # Insert admin to server_users
         Servers.create_server_user(socket.assigns.current_user, %{"server_id" => server.id})
+        Channels.create_channel(server, %{"name" => "general"})
         notify_parent({:saved, server})
 
         {:noreply,
