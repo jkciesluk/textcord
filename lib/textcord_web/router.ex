@@ -86,6 +86,7 @@ defmodule TextcordWeb.Router do
     live_session :require_admin_user,
       on_mount: [{TextcordWeb.UserAuth, :ensure_authenticated}] do
       live "/edit", ServerLive.Index, :edit
+      live "/show/add_channel", ServerLive.Show, :add_channel
       live "/show/edit", ServerLive.Show, :edit
     end
   end

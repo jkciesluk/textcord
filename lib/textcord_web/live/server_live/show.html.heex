@@ -6,6 +6,11 @@
       <.button>Edit server</.button>
     </.link>
   </:actions>
+  <:actions :if={@is_admin}>
+    <.link patch={~p"/servers/#{@server}/show/add_channel"} phx-click={JS.push_focus()}>
+      <.button>Add Channel</.button>
+    </.link>
+  </:actions>
 </.header>
 
 <.list>
@@ -13,11 +18,22 @@
   <:item title="Description"><%= @server.description %></:item>
 </.list>
 
+<p>&nbsp;</p>
+<h2>Admin: <%= @server.user.email %></h2>
+
+<p>&nbsp;</p>
 <h2>Channels</h2>
 <%= for channel <- @server.channels do %>
 <li><%= channel.name %></li>
 <% end %>
 
+
+
+<p>&nbsp;</p>
+<h2>Members</h2>
+<%= for member <- @members do %>
+<li><%= member %></li>
+<% end %>
 
 
 <.back navigate={~p"/servers"}>Back to servers</.back>
@@ -30,6 +46,19 @@
     title={@page_title}
     action={@live_action}
     server={@server}
+    patch={~p"/servers/#{@server}"}
+  />
+</.modal>
+
+<.modal :if={@live_action == :add_channel} id="channel-server-modal" show on_cancel={JS.patch(~p"/servers/#{@server}")}>
+  <.live_component
+    module={TextcordWeb.ServerLive.ChannelFormComponent}
+    id={@server.id}
+    current_user={@current_user}
+    title={@page_title}
+    action={@live_action}
+    server={@server}
+    channel={@channel}
     patch={~p"/servers/#{@server}"}
   />
 </.modal>

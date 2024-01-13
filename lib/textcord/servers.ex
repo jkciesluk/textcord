@@ -4,6 +4,7 @@ defmodule Textcord.Servers do
   """
 
   import Ecto.Query, warn: false
+  alias Textcord.Accounts
   alias Textcord.Repo
 
   alias Textcord.Servers.Server
@@ -225,8 +226,19 @@ defmodule Textcord.Servers do
     Repo.one(query) != nil
   end
 
+  def get_server_members(server_id) do
+    query = from u in Accounts.User,
+      join: su in ServerUser, on: u.id == su.user_id,
+      where: su.server_id == ^server_id,
+      select: u.email
+
+    Repo.all(query)
+  end
+
   def is_server_admin?(user, server_id) do
     server = get_server!(server_id)
     server.user_id == user.id
   end
+
+
 end
