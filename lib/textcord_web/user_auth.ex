@@ -164,10 +164,11 @@ defmodule TextcordWeb.UserAuth do
 
   def on_mount(:ensure_admin_user, params, session, socket) do
     socket = mount_current_user(socket, session)
+
     if socket.assigns.current_user do
       user = socket.assigns.current_user
 
-      case Map.fetch(params, "id") do
+      case Map.fetch(params, "server_id") do
         {:ok, server_id} ->
           if Textcord.Servers.is_server_admin?(user, server_id) do
             {:cont, socket}
@@ -181,6 +182,40 @@ defmodule TextcordWeb.UserAuth do
           end
 
         _ ->
+          {:cont, socket}
+      end
+    else
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
+        |> Phoenix.LiveView.redirect(to: ~p"/users/log_in")
+
+      {:halt, socket}
+    end
+  end
+
+  def on_mount(:ensure_server_member, params, session, socket) do
+    socket = mount_current_user(socket, session)
+
+    if socket.assigns.current_user do
+      user = socket.assigns.current_user
+
+      case Map.fetch(params, "server_id") do
+        {:ok, server_id} ->
+          if Textcord.Servers.is_server_member?(user, server_id) do
+            {:cont, socket}
+          else
+            socket =
+              socket
+              |> Phoenix.LiveView.put_flash(:error, "You must be a member to access this page.")
+              |> Phoenix.LiveView.redirect(to: ~p"/servers")
+
+            {:halt, socket}
+          end
+
+        _ ->
+          IO.inspect("elo")
+
           {:cont, socket}
       end
     else
@@ -249,7 +284,7 @@ defmodule TextcordWeb.UserAuth do
     if conn.assigns[:current_user] do
       user = conn.assigns[:current_user]
 
-      case Map.fetch(conn.params, "id") do
+      case Map.fetch(conn.params, "server_id") do
         {:ok, server_id} ->
           if Textcord.Servers.is_server_admin?(user, server_id) do
             conn
@@ -262,6 +297,37 @@ defmodule TextcordWeb.UserAuth do
           end
 
         _ ->
+          conn
+      end
+    else
+      conn
+      |> put_flash(:error, "You must log in to access this page.")
+      |> maybe_store_return_to()
+      |> redirect(to: ~p"/users/log_in")
+      |> halt()
+    end
+  end
+
+  @doc """
+  Used for routes that require the user to be a member of the server
+  """
+  def check_server_member(conn, _opts) do
+    if conn.assigns[:current_user] do
+      user = conn.assigns[:current_user]
+      case Map.fetch(conn.params, "server_id") do
+        {:ok, server_id} ->
+          if Textcord.Servers.is_server_member?(user, server_id) do
+            conn
+          else
+            conn
+            |> put_flash(:error, "You must be a member to access this page.")
+            |> maybe_store_return_to()
+            |> redirect(to: ~p"/servers")
+            |> halt()
+          end
+
+        _ ->
+          IO.inspect("XDDD")
           conn
       end
     else

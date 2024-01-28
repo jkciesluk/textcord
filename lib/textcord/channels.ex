@@ -4,6 +4,7 @@ defmodule Textcord.Channels do
   """
 
   import Ecto.Query, warn: false
+  alias Textcord.Servers
   alias Textcord.Repo
 
   alias Textcord.Channels.Channel
@@ -101,5 +102,10 @@ defmodule Textcord.Channels do
   """
   def change_channel(%Channel{} = channel, attrs \\ %{}) do
     Channel.changeset(channel, attrs)
+  end
+
+  def is_server_member?(user, channel_id) do
+    channel = get_channel!(channel_id)
+    Servers.is_server_member?(user, channel.server_id)
   end
 end

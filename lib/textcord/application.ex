@@ -12,6 +12,7 @@ defmodule Textcord.Application do
       Textcord.Repo,
       {DNSCluster, query: Application.get_env(:textcord, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Textcord.PubSub},
+      TextcordWeb.Presence,
       # Start the Finch HTTP client for sending emails
       {Finch, name: Textcord.Finch},
       # Start a worker by calling: Textcord.Worker.start_link(arg)

@@ -1,4 +1,4 @@
-defmodule TextcordWeb.ServerLive.ChannelFormComponent do
+defmodule TextcordWeb.ChannelLive.ChannelFormComponent do
   use TextcordWeb, :live_component
 
   alias Textcord.Channels

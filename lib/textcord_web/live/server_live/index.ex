@@ -14,7 +14,7 @@ defmodule TextcordWeb.ServerLive.Index do
     {:noreply, apply_action(socket, socket.assigns.live_action, params)}
   end
 
-  defp apply_action(socket, :edit, %{"id" => id}) do
+  defp apply_action(socket, :edit, %{"server_id" => id}) do
     socket
     |> assign(:page_title, "Edit Server")
     |> assign(:server, Servers.get_server!(id))
@@ -49,7 +49,7 @@ defmodule TextcordWeb.ServerLive.Index do
   end
 
   @impl true
-  def handle_event("delete", %{"id" => id}, socket) do
+  def handle_event("delete", %{"server_id" => id}, socket) do
     server = Servers.get_server!(id)
     {:ok, _} = Servers.delete_server(server)
 

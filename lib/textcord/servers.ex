@@ -218,9 +218,9 @@ defmodule Textcord.Servers do
     Repo.all(query)
   end
 
-  def is_server_member?(user, server) do
+  def is_server_member?(user, server_id) do
     query = from su in ServerUser,
-      where: su.user_id == ^user.id and su.server_id == ^server.id,
+      where: su.user_id == ^user.id and su.server_id == ^server_id,
       select: su
 
     Repo.one(query) != nil

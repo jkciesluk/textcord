@@ -57,7 +57,7 @@ defmodule TextcordWeb.ServerLive.JoinServer do
   end
 
   defp join_server(socket, server) do
-    if Servers.is_server_member?(socket.assigns.current_user, server) do
+    if Servers.is_server_member?(socket.assigns.current_user, server.id) do
       {:noreply,
        socket
        |> put_flash(:error, "Server already joined")

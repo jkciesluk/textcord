@@ -20,12 +20,21 @@
 
 <p>&nbsp;</p>
 <h2>Admin: <%= @server.user.email %></h2>
-
 <p>&nbsp;</p>
-<h2>Channels</h2>
-<%= for channel <- @server.channels do %>
-<li><%= channel.name %></li>
-<% end %>
+
+<.table
+  id="channels"
+  rows={@streams.channels}
+  row_click={fn {_id, channel} -> JS.navigate(~p"/channels/#{channel}") end}
+>
+
+  <:col :let={{_id, channel}} label="Name"><%= channel.name %></:col>
+  <:action :let={{_id, channel}}>
+    <div class="sr-only">
+      <.link navigate={~p"/channels/#{channel}"}>Show</.link>
+    </div>
+  </:action>
+</.table>
 
 
 
@@ -52,7 +61,7 @@
 
 <.modal :if={@live_action == :add_channel} id="channel-server-modal" show on_cancel={JS.patch(~p"/servers/#{@server}")}>
   <.live_component
-    module={TextcordWeb.ServerLive.ChannelFormComponent}
+    module={TextcordWeb.ChannelLive.ChannelFormComponent}
     id={@server.id}
     current_user={@current_user}
     title={@page_title}

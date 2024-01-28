@@ -49,10 +49,13 @@ defmodule Textcord.Messages do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_message(user, attrs \\ %{}) do
-    user
-    |> Ecto.build_assoc(:comments)
-    |> Message.changeset(attrs)
+  def create_message(user_id, channel_id, attrs \\ %{}) do
+    attrs = attrs
+    |> Map.put("channel_id", channel_id)
+    |> Map.put("user_id", user_id)
+
+    IO.inspect(attrs)
+    Message.changeset(%Message{}, attrs)
     |> Repo.insert()
   end
 
