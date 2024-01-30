@@ -153,12 +153,7 @@ defmodule TextcordWeb.UserAuth do
     if socket.assigns.current_user do
       {:cont, socket}
     else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log_in")
-
-      {:halt, socket}
+      not_logged_in(socket)
     end
   end
 
@@ -173,60 +168,35 @@ defmodule TextcordWeb.UserAuth do
           if Textcord.Servers.is_server_admin?(user, server_id) do
             {:cont, socket}
           else
-            socket =
-              socket
-              |> Phoenix.LiveView.put_flash(:error, "You must be admin to access this page.")
-              |> Phoenix.LiveView.redirect(to: ~p"/servers/#{server_id}")
-
-            {:halt, socket}
+            halt(socket, "You must be a server admin to access this page.", ~p"/servers")
           end
 
         _ ->
-          {:cont, socket}
+          halt(socket, "You must be a server admin to access this page.", ~p"/servers")
       end
     else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log_in")
-
-      {:halt, socket}
+      not_logged_in(socket)
     end
   end
+
+
 
   def on_mount(:ensure_server_member, params, session, socket) do
     socket = mount_current_user(socket, session)
 
     if socket.assigns.current_user do
       user = socket.assigns.current_user
-
-      case Map.fetch(params, "server_id") do
-        {:ok, server_id} ->
-          if Textcord.Servers.is_server_member?(user, server_id) do
-            {:cont, socket}
-          else
-            socket =
-              socket
-              |> Phoenix.LiveView.put_flash(:error, "You must be a member to access this page.")
-              |> Phoenix.LiveView.redirect(to: ~p"/servers")
-
-            {:halt, socket}
-          end
-
-        _ ->
-          IO.inspect("elo")
-
-          {:cont, socket}
+      if (is_server_member?(user, params)) do
+        {:cont, socket}
+      else
+        halt(socket, "You must be a server member to access this page.", ~p"/servers")
       end
     else
-      socket =
-        socket
-        |> Phoenix.LiveView.put_flash(:error, "You must log in to access this page.")
-        |> Phoenix.LiveView.redirect(to: ~p"/users/log_in")
-
-      {:halt, socket}
+      not_logged_in(socket)
     end
   end
+
+
 
   def on_mount(:redirect_if_user_is_authenticated, _params, session, socket) do
     socket = mount_current_user(socket, session)
@@ -269,11 +239,7 @@ defmodule TextcordWeb.UserAuth do
     if conn.assigns[:current_user] do
       conn
     else
-      conn
-      |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
-      |> halt()
+      halt_conn(conn, "You must log in to access this page.", ~p"/users/log_in")
     end
   end
 
@@ -289,22 +255,13 @@ defmodule TextcordWeb.UserAuth do
           if Textcord.Servers.is_server_admin?(user, server_id) do
             conn
           else
-            conn
-            |> put_flash(:error, "You must be admin to access this page.")
-            |> maybe_store_return_to()
-            |> redirect(to: ~p"/servers/#{server_id}")
-            |> halt()
+            halt_conn(conn, "You must be a server admin to access this page.", ~p"/servers/#{server_id}")
           end
-
         _ ->
-          conn
+          halt_conn(conn, "You must be a server admin to access this page.", ~p"/servers")
       end
     else
-      conn
-      |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
-      |> halt()
+      halt_conn(conn, "You must log in to access this page.", ~p"/users/log_in")
     end
   end
 
@@ -314,28 +271,27 @@ defmodule TextcordWeb.UserAuth do
   def check_server_member(conn, _opts) do
     if conn.assigns[:current_user] do
       user = conn.assigns[:current_user]
-      case Map.fetch(conn.params, "server_id") do
-        {:ok, server_id} ->
-          if Textcord.Servers.is_server_member?(user, server_id) do
-            conn
-          else
-            conn
-            |> put_flash(:error, "You must be a member to access this page.")
-            |> maybe_store_return_to()
-            |> redirect(to: ~p"/servers")
-            |> halt()
-          end
-
-        _ ->
-          IO.inspect("XDDD")
-          conn
+      if (is_server_member?(user, conn.params)) do
+        conn
+      else
+        halt_conn(conn, "You must be a server member to access this page.", ~p"/servers")
       end
     else
-      conn
-      |> put_flash(:error, "You must log in to access this page.")
-      |> maybe_store_return_to()
-      |> redirect(to: ~p"/users/log_in")
-      |> halt()
+      halt_conn(conn, "You must log in to access this page.", ~p"/users/log_in")
+    end
+  end
+
+  defp is_server_member?(user, params) do
+    case Map.fetch(params, "server_id") do
+      {:ok, server_id} ->
+        Textcord.Servers.is_server_member?(user, server_id)
+      _ ->
+        case Map.fetch(params, "channel_id") do
+          {:ok, channel_id} ->
+            Textcord.Channels.is_server_member?(user, channel_id)
+          _ ->
+            false
+        end
     end
   end
 
@@ -352,4 +308,25 @@ defmodule TextcordWeb.UserAuth do
   defp maybe_store_return_to(conn), do: conn
 
   defp signed_in_path(_conn), do: ~p"/"
+
+  def halt_conn(conn, msg, redirect) do
+    conn
+    |> put_flash(:error, msg)
+    |> maybe_store_return_to()
+    |> redirect(to: redirect)
+    |> halt()
+  end
+
+  def halt(socket, msg, redirect) do
+    socket =
+      socket
+      |> Phoenix.LiveView.put_flash(:error, msg)
+      |> Phoenix.LiveView.redirect(to: redirect)
+
+    {:halt, socket}
+  end
+
+  def not_logged_in(socket) do
+    halt(socket, "You must log in to access this page.", ~p"/users/log_in")
+  end
 end
