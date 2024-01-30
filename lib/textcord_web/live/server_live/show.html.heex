@@ -41,7 +41,10 @@
 <p>&nbsp;</p>
 <h2>Members</h2>
 <%= for member <- @members do %>
-<li><%= member %></li>
+  <li>
+    <%= member %>
+    <%= if member in @presence, do: "(online)", else: "" %>
+  </li>
 <% end %>
 
 

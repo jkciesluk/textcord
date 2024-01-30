@@ -6,7 +6,7 @@ defmodule TextcordWeb.ServerLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :servers, Servers.get_available_servers(socket.assigns.current_user) |> IO.inspect())}
+    {:ok, stream(socket, :servers, Servers.get_available_servers(socket.assigns.current_user))}
   end
 
   @impl true

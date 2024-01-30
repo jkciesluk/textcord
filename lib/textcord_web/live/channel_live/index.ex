@@ -19,14 +19,14 @@ defmodule TextcordWeb.ChannelLive.Index do
     topic = @topic <> to_string(channel_id)
     server = Servers.get_server!(channel.server_id)
     if connected?(socket), do: send(self(), {:fetch, channel_id})
+
     {:noreply,
      socket
      |> assign(:channel, channel)
      |> assign(:topic, topic)
      |> assign(:server, server)
      |> subscribe_if_connected()
-     |> init_presence()
-    }
+     |> init_presence()}
   end
 
   @impl true
@@ -41,15 +41,8 @@ defmodule TextcordWeb.ChannelLive.Index do
     {:noreply, socket}
   end
 
-  def handle_info(%{event: "presence_diff", payload: payload}, socket) do
-    send_update(TextcordWeb.ChannelLive.ChatLiveComponent,
-      id: "chat-live",
-      presence_diff: payload
-    )
-
-    {:noreply,
-     socket
-     |> update_presence(payload)}
+  def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
+    {:noreply, socket}
   end
 
   def handle_info({:fetch, channel_id}, socket) do
@@ -82,34 +75,22 @@ defmodule TextcordWeb.ChannelLive.Index do
   defp subscribe_if_connected(%{assigns: %{topic: topic}} = socket) do
     if connected?(socket) do
       Endpoint.subscribe(topic)
-
       assign(socket, chat_state: :subscribed)
     else
       assign(socket, chat_state: :unsubscribed)
     end
   end
 
-  defp init_presence(%{assigns: %{topic: topic}} = socket) do
-    presence =
-      if connected?(socket) do
-        {:ok, _} =
-          Presence.track(self(), topic, socket.assigns.current_user.email, %{})
+  defp init_presence(socket) do
+    if connected?(socket) do
+      Presence.track(
+        self(),
+        "server:#{socket.assigns.server.id}",
+        socket.assigns.current_user.email,
+        %{}
+      )
+    end
 
-        Presence.list(topic) |> Map.keys() |> MapSet.new() #|> IO.inspect()
-      else
-        MapSet.new()
-      end
-
-    assign(socket, presence: presence)
-  end
-
-  defp update_presence(socket, %{joins: j, leaves: l}) do
-    assign(socket,
-      presence:
-        Map.keys(j)
-        |> MapSet.new()
-        |> MapSet.union(socket.assigns.presence)
-        |> MapSet.difference(MapSet.new(Map.keys(l)))
-    )
+    socket
   end
 end

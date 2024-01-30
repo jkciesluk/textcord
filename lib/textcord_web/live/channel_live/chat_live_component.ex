@@ -21,15 +21,9 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
      |> then(& {:ok, &1})
   end
 
-  def update(%{presence_diff: msg}, socket) do
-    IO.inspect("presence #{inspect(msg)}")
-    # TODO user joins and leaves
-    socket
-     |> then(& {:ok, &1})
-  end
+
 
   def update(%{old_messages: msgs}, socket) do
-    # IO.inspect("update with old messages #{inspect(msgs)}")
 
     socket
      |> stream(:messages, msgs)
@@ -37,7 +31,6 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   end
 
   def update(assigns, socket) do
-    # IO.inspect("update default ")
     socket
     |> assign(assigns)
     |> then(& {:ok, &1})
@@ -46,8 +39,10 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   @impl true
   def handle_event("send-message", %{"text" => message} = params, socket) do
     Logger.info(send_message: message)
+    server_id = socket.assigns.server.id
+    channel_id = socket.assigns.channel.id
 
-    {:ok, message} = Messages.create_message(socket.assigns.current_user.id, socket.assigns.channel.id, params)
+    {:ok, message} = Messages.create_message(socket.assigns.current_user.id, channel_id, params)
     new_message = %{id: message.id,
                     msg: message.text,
                     user: socket.assigns.current_user.email,
@@ -57,6 +52,7 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
                           |> List.first()
                   }
     TextcordWeb.Endpoint.broadcast(socket.assigns.topic, "new-message", new_message)
+    TextcordWeb.Endpoint.broadcast("server:" <> server_id, "unread", channel_id)
 
     {:noreply, socket |> assign(form: %{})}
   end
