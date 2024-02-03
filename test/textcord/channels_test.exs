@@ -56,4 +56,56 @@ defmodule Textcord.ChannelsTest do
       assert %Ecto.Changeset{} = Channels.change_channel(channel)
     end
   end
+
+  describe "unreads" do
+    alias Textcord.Channels.Unread
+
+    import Textcord.ChannelsFixtures
+
+    @invalid_attrs %{}
+
+    test "list_unreads/0 returns all unreads" do
+      unread = unread_fixture()
+      assert Channels.list_unreads() == [unread]
+    end
+
+    test "get_unread!/1 returns the unread with given id" do
+      unread = unread_fixture()
+      assert Channels.get_unread!(unread.id) == unread
+    end
+
+    test "create_unread/1 with valid data creates a unread" do
+      valid_attrs = %{}
+
+      assert {:ok, %Unread{} = unread} = Channels.create_unread(valid_attrs)
+    end
+
+    test "create_unread/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Channels.create_unread(@invalid_attrs)
+    end
+
+    test "update_unread/2 with valid data updates the unread" do
+      unread = unread_fixture()
+      update_attrs = %{}
+
+      assert {:ok, %Unread{} = unread} = Channels.update_unread(unread, update_attrs)
+    end
+
+    test "update_unread/2 with invalid data returns error changeset" do
+      unread = unread_fixture()
+      assert {:error, %Ecto.Changeset{}} = Channels.update_unread(unread, @invalid_attrs)
+      assert unread == Channels.get_unread!(unread.id)
+    end
+
+    test "delete_unread/1 deletes the unread" do
+      unread = unread_fixture()
+      assert {:ok, %Unread{}} = Channels.delete_unread(unread)
+      assert_raise Ecto.NoResultsError, fn -> Channels.get_unread!(unread.id) end
+    end
+
+    test "change_unread/1 returns a unread changeset" do
+      unread = unread_fixture()
+      assert %Ecto.Changeset{} = Channels.change_unread(unread)
+    end
+  end
 end

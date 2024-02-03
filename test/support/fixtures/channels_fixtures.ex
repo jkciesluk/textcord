@@ -17,4 +17,18 @@ defmodule Textcord.ChannelsFixtures do
 
     channel
   end
+
+  @doc """
+  Generate a unread.
+  """
+  def unread_fixture(attrs \\ %{}) do
+    {:ok, unread} =
+      attrs
+      |> Enum.into(%{
+
+      })
+      |> Textcord.Channels.create_unread()
+
+    unread
+  end
 end

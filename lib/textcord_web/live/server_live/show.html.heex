@@ -24,12 +24,15 @@
 
 <.table
   id="channels"
-  rows={@streams.channels}
-  row_click={fn {_id, channel} -> JS.navigate(~p"/channels/#{channel}") end}
+  rows={@server.channels}
+  row_click={fn channel -> JS.navigate(~p"/channels/#{channel}") end}
 >
 
-  <:col :let={{_id, channel}} label="Name"><%= channel.name %></:col>
-  <:action :let={{_id, channel}}>
+  <:col :let={channel} label="Name">
+    <%= channel.name %>
+    <%= if channel.id in @unreads, do: "!!!", else: "" %>
+  </:col>
+  <:action :let={channel}>
     <div class="sr-only">
       <.link navigate={~p"/channels/#{channel}"}>Show</.link>
     </div>

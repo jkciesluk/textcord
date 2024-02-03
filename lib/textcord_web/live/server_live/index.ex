@@ -1,12 +1,17 @@
 defmodule TextcordWeb.ServerLive.Index do
   use TextcordWeb, :live_view
 
+  alias Textcord.Channels
   alias Textcord.Servers
   alias Textcord.Servers.Server
 
   @impl true
   def mount(_params, _session, socket) do
-    {:ok, stream(socket, :servers, Servers.get_available_servers(socket.assigns.current_user))}
+    {:ok,
+     socket
+     |> stream(:servers, Servers.get_available_servers(socket.assigns.current_user))
+     |> check_unread()
+    }
   end
 
   @impl true
@@ -36,6 +41,16 @@ defmodule TextcordWeb.ServerLive.Index do
     socket
     |> assign(:page_title, "Join Server")
     |> assign(:server, nil)
+  end
+
+  defp check_unread(socket) do
+    if (connected?(socket)) do
+      unreads =
+        Channels.get_user_unread_servers(socket.assigns.current_user.id)
+      assign(socket, unreads: unreads)
+    else
+      assign(socket, unreads: [])
+    end
   end
 
   @impl true

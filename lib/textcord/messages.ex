@@ -54,7 +54,6 @@ defmodule Textcord.Messages do
     |> Map.put("channel_id", channel_id)
     |> Map.put("user_id", user_id)
 
-    IO.inspect(attrs)
     Message.changeset(%Message{}, attrs)
     |> Repo.insert()
   end

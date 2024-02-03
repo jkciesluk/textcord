@@ -1,6 +1,7 @@
 defmodule TextcordWeb.ServerLive.Show do
   use TextcordWeb, :live_view
 
+  alias Textcord.Channels
   alias Textcord.Servers
   alias Textcord.Channels.Channel
 
@@ -15,13 +16,13 @@ defmodule TextcordWeb.ServerLive.Show do
   def handle_params(%{"server_id" => id}, _, socket) do
     server = Servers.get_server!(id) |> Textcord.Repo.preload([:user, :channels])
     is_admin = socket.assigns.current_user.id == server.user_id
-    members = Servers.get_server_members(server.id)
+    members = Servers.get_server_members(server.id) |> Enum.map(fn user -> user.email end)
 
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
      |> assign(:server, server)
-     |> stream(:channels, server.channels)
+     |> check_unread()
      |> assign(:is_admin, is_admin)
      |> assign(:members, members)
      |> assign(:topic, "server:#{server.id}")
@@ -32,11 +33,13 @@ defmodule TextcordWeb.ServerLive.Show do
 
   defp init_presence(socket) do
     topic = socket.assigns.topic
+
     presence =
-      if (connected?(socket)) do
-        if (!already_tracked?(socket, topic)) do
+      if connected?(socket) do
+        if !already_tracked?(socket, topic) do
           Presence.track(self(), topic, socket.assigns.current_user.email, %{})
         end
+
         Presence.list(topic) |> Map.keys() |> MapSet.new()
       else
         MapSet.new()
@@ -46,15 +49,36 @@ defmodule TextcordWeb.ServerLive.Show do
   end
 
   defp already_tracked?(socket, topic) do
-    Presence.list(topic) |> Map.keys() |> MapSet.new() |> MapSet.member?(socket.assigns.current_user.email)
+    Presence.list(topic)
+    |> Map.keys()
+    |> MapSet.new()
+    |> MapSet.member?(socket.assigns.current_user.email)
+  end
+
+  defp check_unread(socket) do
+    if (connected?(socket)) do
+      unreads =
+        Channels.get_server_unreads(socket.assigns.server.channels, socket.assigns.current_user.id)
+        |> Enum.map(fn unread -> unread.channel_id end)
+
+      assign(socket, unreads: unreads)
+    else
+      assign(socket, unreads: [])
+    end
   end
 
   @impl true
   def handle_info(%{event: "presence_diff", payload: payload}, socket) do
-    IO.inspect("presence diff server")
     {:noreply,
      socket
      |> update_presence(payload)}
+  end
+
+  def handle_info(%{event: "unread", payload: channel_id}, socket) do
+    IO.inspect("unread server #{channel_id} for user #{socket.assigns.current_user.email}")
+
+    {:noreply,
+     socket |> assign(:unreads, [channel_id | socket.assigns.unreads])}
   end
 
   defp update_presence(socket, %{joins: j, leaves: l}) do
@@ -66,6 +90,8 @@ defmodule TextcordWeb.ServerLive.Show do
         |> MapSet.difference(MapSet.new(Map.keys(l)))
     )
   end
+
+
 
   defp subscribe_if_connected(%{assigns: %{topic: topic}} = socket) do
     if connected?(socket) do

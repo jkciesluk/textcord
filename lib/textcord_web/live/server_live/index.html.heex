@@ -15,7 +15,11 @@
   rows={@streams.servers}
   row_click={fn {_id, server} -> JS.navigate(~p"/servers/#{server}") end}
 >
-  <:col :let={{_id, server}} label="Name"><%= server.name %></:col>
+  <:col :let={{_id, server}} label="Name">
+    <%= server.name %>
+    <%= if server.id in @unreads, do: "  !!!", else: "" %>
+
+  </:col>
   <:col :let={{_id, server}} label="Description"><%= server.description %></:col>
   <:action :let={{_id, server}}>
     <div class="sr-only">

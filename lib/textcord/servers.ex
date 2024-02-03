@@ -230,7 +230,7 @@ defmodule Textcord.Servers do
     query = from u in Accounts.User,
       join: su in ServerUser, on: u.id == su.user_id,
       where: su.server_id == ^server_id,
-      select: u.email
+      select: u
 
     Repo.all(query)
   end

@@ -108,4 +108,133 @@ defmodule Textcord.Channels do
     channel = get_channel!(channel_id)
     Servers.is_server_member?(user, channel.server_id)
   end
+
+  alias Textcord.Channels.Unread
+
+  @doc """
+  Returns the list of unreads.
+
+  ## Examples
+
+      iex> list_unreads()
+      [%Unread{}, ...]
+
+  """
+  def list_unreads do
+    Repo.all(Unread)
+  end
+
+  @doc """
+  Gets a single unread.
+
+  Raises `Ecto.NoResultsError` if the Unread does not exist.
+
+  ## Examples
+
+      iex> get_unread!(123)
+      %Unread{}
+
+      iex> get_unread!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_unread!(id), do: Repo.get!(Unread, id)
+
+  @doc """
+  Creates a unread.
+
+  ## Examples
+
+      iex> create_unread(%{field: value})
+      {:ok, %Unread{}}
+
+      iex> create_unread(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_unread(attrs \\ %{}) do
+    %Unread{}
+    |> Unread.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a unread.
+
+  ## Examples
+
+      iex> update_unread(unread, %{field: new_value})
+      {:ok, %Unread{}}
+
+      iex> update_unread(unread, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_unread(%Unread{} = unread, attrs) do
+    unread
+    |> Unread.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a unread.
+
+  ## Examples
+
+      iex> delete_unread(unread)
+      {:ok, %Unread{}}
+
+      iex> delete_unread(unread)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_unread(%Unread{} = unread) do
+    Repo.delete(unread)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking unread changes.
+
+  ## Examples
+
+      iex> change_unread(unread)
+      %Ecto.Changeset{data: %Unread{}}
+
+  """
+  def change_unread(%Unread{} = unread, attrs \\ %{}) do
+    Unread.changeset(unread, attrs)
+  end
+
+  def on_message_send(server_id, channel_id, sender_id) do
+    server_users = Servers.get_server_members(server_id) |> Enum.filter(fn user -> user.id != sender_id end)
+    # insert to unread if not already there with this channel_id
+    Enum.each(server_users, fn user ->
+      unread = Repo.get_by(Unread, user_id: user.id, channel_id: channel_id)
+      if unread == nil do
+        create_unread(%{user_id: user.id, channel_id: channel_id})
+      end
+    end)
+
+  end
+
+  def mark_as_read(channel_id, user_id) do
+    unread = Repo.get_by(Unread, user_id: user_id, channel_id: channel_id)
+    if unread != nil do
+      delete_unread(unread)
+    end
+  end
+
+  def get_server_unreads(channels, user_id) do
+    channels
+    |> Enum.map(fn channel ->
+      Repo.get_by(Unread, user_id: user_id, channel_id: channel.id)
+    end)
+    |> Enum.filter(fn unread -> unread != nil end)
+  end
+
+  def get_user_unread_servers(user_id) do
+    Repo.all(Unread, where: [user_id: user_id])
+    |> Enum.map(fn unread -> Repo.get!(Channel, unread.channel_id).server_id end)
+    |> Enum.uniq()
+  end
 end

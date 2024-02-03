@@ -26,7 +26,10 @@ defmodule TextcordWeb.ChannelLive.Index do
      |> assign(:topic, topic)
      |> assign(:server, server)
      |> subscribe_if_connected()
-     |> init_presence()}
+     |> init_presence()
+     |> mark_as_read()
+    }
+
   end
 
   @impl true
@@ -79,6 +82,16 @@ defmodule TextcordWeb.ChannelLive.Index do
     else
       assign(socket, chat_state: :unsubscribed)
     end
+  end
+
+  defp mark_as_read(socket) do
+    if connected?(socket) do
+      channel_id = socket.assigns.channel.id
+      user_id = socket.assigns.current_user.id
+      Channels.mark_as_read(channel_id, user_id)
+    end
+
+    socket
   end
 
   defp init_presence(socket) do
