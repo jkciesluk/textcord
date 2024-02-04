@@ -32,29 +32,36 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   end
 
   @impl true
-  def handle_event("send-message", params, socket) do
-    server_id = socket.assigns.server.id
-    channel_id = socket.assigns.channel.id
+  def handle_event("send-message", %{"text" => text} = params, socket) do
+    if String.trim(text) == "" do
+      {:noreply, socket}
+    else
+      server_id = socket.assigns.server.id
+      channel_id = socket.assigns.channel.id
 
-    {:ok, message} = Messages.create_message(socket.assigns.current_user.id, channel_id, params)
+      {:ok, message} = Messages.create_message(socket.assigns.current_user.id, channel_id, params)
 
-    new_message = %{
-      id: message.id,
-      msg: message.text,
-      user: socket.assigns.current_user.email,
-      time:
-        message.inserted_at
-        |> Time.to_string()
+      new_message = %{
+        id: message.id,
+        msg: message.text,
+        user: socket.assigns.current_user.email,
+        time:
+          message.inserted_at
+          |> Time.to_string()
+      }
 
-    }
+      TextcordWeb.Endpoint.broadcast(
+        "channel:" <> socket.assigns.channel.id,
+        "new-message",
+        new_message
+      )
 
-    TextcordWeb.Endpoint.broadcast("channel:" <> socket.assigns.channel.id, "new-message", new_message)
-    update_unread(server_id, channel_id, socket.assigns.current_user.id)
+      update_unread(server_id, channel_id, socket.assigns.current_user.id)
 
-    {:noreply,
-     socket
-     |> assign(form: %{socket.assigns.form | "text" => ""})
-    }
+      {:noreply,
+       socket
+       |> assign(form: %{socket.assigns.form | "text" => ""})}
+    end
   end
 
   def handle_event("update_text", %{"text" => text}, socket) do
@@ -63,23 +70,31 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
 
   defp update_unread(server_id, channel_id, user_id) do
     Channels.on_message_send(server_id, channel_id, user_id)
-    TextcordWeb.Endpoint.broadcast("server:" <> server_id, "unread", %{server_id: server_id, channel_id: channel_id})
+
+    TextcordWeb.Endpoint.broadcast("server:" <> server_id, "unread", %{
+      server_id: server_id,
+      channel_id: channel_id
+    })
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} class="flex flex-col w-full mx-auto mt-4 h-screen" >
-      <div id="messages-container" class="border-2 flex-1 overflow-auto p-4 max-h-[65vh] w-full" phx-hook="ScrollToBottom">
+    <div id={@id} class="flex flex-col w-full mx-auto mt-4 h-screen">
+      <div
+        id="messages-container"
+        class="border-2 flex-1 overflow-auto p-4 max-h-[65vh] w-full"
+        phx-hook="ScrollToBottom"
+      >
         <ul class="list-group messages" phx-update="stream" id="messages-box">
           <%= for {_msg_id, msg} <- @streams.messages do %>
-          <li class="mb-4 pb-4 border-b border-gray-300">
-            <div class="flex justify-between">
-              <div class="font-bold mb-1"><%= msg.user %></div>
-              <div class="text-gray-500 ml-2 justify-end"><%= msg.time %></div>
-            </div>
-            <div><%= msg.msg %></div>
-          </li>
+            <li class="mb-4 pb-4 border-b border-gray-300">
+              <div class="flex justify-between">
+                <div class="font-bold mb-1"><%= msg.user %></div>
+                <div class="text-gray-500 ml-2 justify-end"><%= msg.time %></div>
+              </div>
+              <div><%= msg.msg %></div>
+            </li>
           <% end %>
         </ul>
       </div>

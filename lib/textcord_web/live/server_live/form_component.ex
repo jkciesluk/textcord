@@ -51,8 +51,13 @@ defmodule TextcordWeb.ServerLive.FormComponent do
     {:noreply, assign_form(socket, changeset)}
   end
 
-  def handle_event("save", %{"server" => server_params}, socket) do
-    save_server(socket, socket.assigns.action, server_params)
+  def handle_event("save", %{"server" => %{"name" => name, "description" => description}}, socket) do
+    if String.trim(name) == "" do
+      # Server name is empty, prevent creation
+      {:noreply, socket |> put_flash(:error, "Server name cannot be empty")}
+    else
+      save_server(socket, socket.assigns.action, %{"name" => name, "description" => description})
+    end
   end
 
   defp save_server(socket, :edit, server_params) do

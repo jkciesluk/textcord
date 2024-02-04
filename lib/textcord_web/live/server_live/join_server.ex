@@ -46,7 +46,11 @@ defmodule TextcordWeb.ServerLive.JoinServer do
 
   # join server
   def handle_event("save", %{"name" => name}, socket) do
-    join_server(socket, Servers.get_server_by_name(name))
+    if String.trim(name) == "" do
+      {:noreply, socket |> put_flash(:error, "Server name cannot be empty")}
+    else
+      join_server(socket, Servers.get_server_by_name(name))
+    end
   end
 
   defp join_server(socket, nil) do
