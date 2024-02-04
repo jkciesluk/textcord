@@ -6,8 +6,6 @@ defmodule TextcordWeb.ChannelLive.Index do
 
   alias TextcordWeb.{Endpoint, Presence}
 
-  @topic "channel:"
-
   @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
@@ -16,7 +14,6 @@ defmodule TextcordWeb.ChannelLive.Index do
   @impl true
   def handle_params(%{"channel_id" => channel_id}, _, socket) do
     channel = Channels.get_channel!(channel_id)
-    topic = @topic <> to_string(channel_id)
     server = Servers.get_server!(channel.server_id) |> Textcord.Repo.preload([:channels])
     members = Servers.get_server_members(server.id) |> Enum.map(fn user -> user.email end)
     if connected?(socket), do: send(self(), {:fetch, channel_id})
@@ -24,14 +21,11 @@ defmodule TextcordWeb.ChannelLive.Index do
     {:noreply,
      socket
      |> assign(:channel, channel)
-     |> assign(:topic, topic)
      |> assign(:server, server)
      |> assign(:members, members)
+     |> check_unread()
      |> subscribe_if_connected()
-     |> init_presence()
-     |> mark_as_read()
-    }
-
+     |> init_presence()}
   end
 
   @impl true
@@ -77,20 +71,39 @@ defmodule TextcordWeb.ChannelLive.Index do
     {:noreply, socket}
   end
 
-  defp subscribe_if_connected(%{assigns: %{topic: topic}} = socket) do
-    if connected?(socket) do
-      Endpoint.subscribe(topic)
-      assign(socket, chat_state: :subscribed)
+  def handle_info(%{event: "unread", payload: %{channel_id: channel_id}}, socket) do
+    if socket.assigns.channel.id == channel_id do
+      Channels.mark_as_read(channel_id, socket.assigns.current_user.id)
+      {:noreply, socket}
     else
-      assign(socket, chat_state: :unsubscribed)
+      {:noreply, socket |> assign(:unreads, [channel_id | socket.assigns.unreads])}
     end
   end
 
-  defp mark_as_read(socket) do
+  defp check_unread(socket) do
     if connected?(socket) do
-      channel_id = socket.assigns.channel.id
-      user_id = socket.assigns.current_user.id
-      Channels.mark_as_read(channel_id, user_id)
+      Channels.mark_as_read(
+        socket.assigns.channel.id,
+        socket.assigns.current_user.id
+      )
+
+      unreads =
+        Channels.get_server_unreads(
+          socket.assigns.server.channels,
+          socket.assigns.current_user.id
+        )
+        |> Enum.map(fn unread -> unread.channel_id end)
+
+      assign(socket, unreads: unreads)
+    else
+      assign(socket, unreads: [])
+    end
+  end
+
+  defp subscribe_if_connected(%{assigns: %{channel: channel, server: server}} = socket) do
+    if connected?(socket) do
+      Endpoint.subscribe("channel:#{channel.id}")
+      Endpoint.subscribe("server:#{server.id}")
     end
 
     socket

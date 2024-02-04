@@ -50,7 +50,7 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
         |> List.first()
     }
 
-    TextcordWeb.Endpoint.broadcast(socket.assigns.topic, "new-message", new_message)
+    TextcordWeb.Endpoint.broadcast("channel:" <> socket.assigns.channel.id, "new-message", new_message)
     update_unread(server_id, channel_id, socket.assigns.current_user.id)
 
     {:noreply,
