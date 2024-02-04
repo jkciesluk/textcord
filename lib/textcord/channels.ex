@@ -233,7 +233,9 @@ defmodule Textcord.Channels do
   end
 
   def get_user_unread_servers(user_id) do
-    Repo.all(Unread, where: [user_id: user_id])
+    query = from(u in Unread, where: u.user_id == ^user_id)
+
+    Repo.all(query)
     |> Enum.map(fn unread -> Repo.get!(Channel, unread.channel_id).server_id end)
     |> Enum.uniq()
   end

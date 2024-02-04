@@ -8,13 +8,13 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   def mount(socket) do
     socket
     |> stream(:messages, [])
-    |> assign(form: %{"text" => nil})
+    |> assign(form: %{"text" => ""})
+    |> assign(scroll_to_bottom: true)
     |> then(&{:ok, &1})
   end
 
   @impl true
   def update(%{new_message: msg}, socket) do
-
     socket
     |> stream_insert(:messages, msg)
     |> then(&{:ok, &1})
@@ -53,40 +53,53 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
     TextcordWeb.Endpoint.broadcast(socket.assigns.topic, "new-message", new_message)
     update_unread(server_id, channel_id, socket.assigns.current_user.id)
 
-    {:noreply, socket |> assign(form: %{})}
+    {:noreply,
+     socket
+     |> assign(form: %{socket.assigns.form | "text" => ""})
+     |> push_event("scroll-to-bottom", %{})}
+  end
+
+  def handle_event("update_text", %{"text" => text}, socket) do
+    {:noreply, assign(socket, form: %{socket.assigns.form | "text" => text})}
+  end
+
+  def handle_event("scroll-to-bottom", _, socket) do
+    {:noreply, socket |> push_patch(view: ChatLiveComponent)}
   end
 
   defp update_unread(server_id, channel_id, user_id) do
     Channels.on_message_send(server_id, channel_id, user_id)
-    TextcordWeb.Endpoint.broadcast("server:" <> server_id, "unread", channel_id)
+    TextcordWeb.Endpoint.broadcast("server:" <> server_id, "unread", %{server_id: server_id, channel_id: channel_id})
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} class="h-[400px] flex flex-col justify-items-end">
-      <div id="messages-container border-2 h-[350px] overflow-auto" class="ml-4">
+    <div id={@id} class="flex flex-col h-screen w-full mx-auto mt-4" phx-hook="scroll-to-bottom">
+      <div id="messages-container" class="border-2 flex-1 overflow-auto mb-4 p-4 max-h-[65vh] w-full">
         <ul class="list-group messages" phx-update="stream" id="messages-box">
-          <%= for {_msg_id, msg} <-  @streams.messages do %>
-            <li>
-              <div><%= msg.user %></div>
-              <span><%= msg.msg %></span>
+          <%= for {_msg_id, msg} <- @streams.messages do %>
+            <li class="mb-4 pb-4 border-b border-gray-300">
+              <div class="font-bold mb-1"><%= msg.user %></div>
+              <div><%= msg.msg %></div>
             </li>
           <% end %>
         </ul>
       </div>
-      <div class="ml-4 border  border-2 mb-0 ">
+      <div class="border border-2 p-4">
         <.form for={@form} phx-target={@myself} phx-submit="send-message">
-          <div class="flex flex-row w-[350px]">
+          <div class="flex flex-row">
             <.input
               field={@form["text"]}
               type="text"
               name="text"
               value=""
-              class="h-full"
+              class="flex-1 p-2 mr-2 border border-2"
               placeholder="Enter text..."
+              phx-value={@form["text"]}
+              phx-change="update_text"
             />
-            <.button>Send</.button>
+            <.button class="bg-blue-500 text-white p-2">Send</.button>
           </div>
         </.form>
       </div>

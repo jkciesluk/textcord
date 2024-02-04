@@ -76,7 +76,7 @@ defmodule TextcordWeb.ServerLive.FormComponent do
         # Insert admin to server_users
         Servers.create_server_user(socket.assigns.current_user, %{"server_id" => server.id})
         Channels.create_channel(server, %{"name" => "general"})
-        notify_parent({:saved, server})
+        notify_parent({:created, server})
 
         {:noreply,
          socket

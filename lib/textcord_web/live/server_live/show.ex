@@ -74,9 +74,7 @@ defmodule TextcordWeb.ServerLive.Show do
      |> update_presence(payload)}
   end
 
-  def handle_info(%{event: "unread", payload: channel_id}, socket) do
-    IO.inspect("unread server #{channel_id} for user #{socket.assigns.current_user.email}")
-
+  def handle_info(%{event: "unread", payload: %{channel_id: channel_id}}, socket) do
     {:noreply,
      socket |> assign(:unreads, [channel_id | socket.assigns.unreads])}
   end

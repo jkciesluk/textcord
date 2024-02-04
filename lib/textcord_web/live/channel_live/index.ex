@@ -17,7 +17,8 @@ defmodule TextcordWeb.ChannelLive.Index do
   def handle_params(%{"channel_id" => channel_id}, _, socket) do
     channel = Channels.get_channel!(channel_id)
     topic = @topic <> to_string(channel_id)
-    server = Servers.get_server!(channel.server_id)
+    server = Servers.get_server!(channel.server_id) |> Textcord.Repo.preload([:channels])
+    members = Servers.get_server_members(server.id) |> Enum.map(fn user -> user.email end)
     if connected?(socket), do: send(self(), {:fetch, channel_id})
 
     {:noreply,
@@ -25,6 +26,7 @@ defmodule TextcordWeb.ChannelLive.Index do
      |> assign(:channel, channel)
      |> assign(:topic, topic)
      |> assign(:server, server)
+     |> assign(:members, members)
      |> subscribe_if_connected()
      |> init_presence()
      |> mark_as_read()

@@ -21,7 +21,7 @@ defmodule TextcordWeb.ServerLive.JoinServer do
         <.input field={@form["name"] |> dbg()} name="name" type="text" value="" label="name" />
 
         <:actions>
-          <.button phx-disable-with="Saving...">Save Server</.button>
+          <.button phx-disable-with="Saving...">Join Server</.button>
         </:actions>
       </.simple_form>
     </div>

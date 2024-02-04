@@ -12,29 +12,29 @@
 
 <.table
   id="servers"
-  rows={@streams.servers}
-  row_click={fn {_id, server} -> JS.navigate(~p"/servers/#{server}") end}
+  rows={@servers}
+  row_click={fn server -> JS.navigate(~p"/servers/#{server}") end}
 >
-  <:col :let={{_id, server}} label="Name">
+  <:col :let={server} label="Name">
     <%= server.name %>
     <%= if server.id in @unreads, do: "  !!!", else: "" %>
 
   </:col>
-  <:col :let={{_id, server}} label="Description"><%= server.description %></:col>
-  <:action :let={{_id, server}}>
+  <:col :let={server} label="Description"><%= server.description %></:col>
+  <:action :let={server}>
     <div class="sr-only">
       <.link navigate={~p"/servers/#{server}"}>Show</.link>
     </div>
   </:action>
-  <:action :let={{_id, server}}>
+  <:action :let={server}>
     <%= if server.user_id == @current_user.id do %>
       <.link patch={~p"/servers/#{server}/edit"}>Edit</.link>
     <% end %>
   </:action>
-  <:action :let={{id, server}}>
+  <:action :let={server}>
     <%= if server.user_id == @current_user.id do %>
       <.link
-        phx-click={JS.push("delete", value: %{id: server.id}) |> hide("##{id}")}
+        phx-click={JS.push("delete", value: %{server_id: server.id}) |> hide("##{server.id}")}
         data-confirm="Are you sure?"
       >
         Delete

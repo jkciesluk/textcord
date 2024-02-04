@@ -1,14 +1,55 @@
-<div class="w-full h-[100vh] flex flex-row">
-  <div class="flex flex-col">
-    <div class=""> 
-      <span><%= @server.name  %></span>
-      <span><%= @server.description  %></span>
+<script>
+  function scrollToBottom() {
+    var messagesContainer = document.getElementById('messages-container');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    scrollToBottom();
+  });
+</script>
+<div class="flex flex-row min-h-screen">
+  <!-- Left Sidebar: Channels -->
+  <div class="flex-none w-1/6 p-4 border-r border-gray-300">
+    <div class="mb-4">
+      <span class="text-xl font-semibold overflow-hidden max-w-full whitespace-nowrap"><%= @server.name %></span>
+      <span class="block text-sm"><%= @server.description %></span>
+    </div>
+  
+    <!-- List of Channels -->
+    <ul class="list-none">
+      <%= for channel <- @server.channels do %>
+        <li class="mb-2">
+          <a href="#" class="hover:underline overflow-hidden max-w-full whitespace-nowrap block"><%= channel.name %></a>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+  
+
+  <!-- Main Content: Chat and Members -->
+  <div class="flex flex-col flex-grow w-2/3">
+    <!-- Channel Chat -->
+    <div class="flex-1 p-4 border-b border-gray-300">
+      <.live_component module={TextcordWeb.ChannelLive.ChatLiveComponent} 
+        id="chat-live"
+        channel={@channel}
+        server={@server}
+        current_user={@current_user}
+        topic={@topic} />
     </div>
   </div>
-  <.live_component module={TextcordWeb.ChannelLive.ChatLiveComponent} 
-    id="chat-live"
-    channel={@channel}
-    server={@server}
-    current_user={@current_user}
-    topic={@topic} />
+
+  <!-- Right Sidebar: Members -->
+  <div class="flex-none w-7/8 p-4">
+    <div class="text-xl font-semibold mb-2">Members</div>
+
+    <!-- List of Members -->
+    <ul class="list-none">
+      <%= for member <- @members do %>
+        <li class="mb-2">
+          <span><%= member %></span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
 </div>

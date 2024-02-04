@@ -1,4 +1,5 @@
 defmodule TextcordWeb.ServerLive.Index do
+  alias TextcordWeb.Endpoint
   use TextcordWeb, :live_view
 
   alias Textcord.Channels
@@ -9,8 +10,9 @@ defmodule TextcordWeb.ServerLive.Index do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> stream(:servers, Servers.get_available_servers(socket.assigns.current_user))
+     |> assign(:servers, Servers.get_available_servers(socket.assigns.current_user))
      |> check_unread()
+     |> subscribe_if_connected()
     }
   end
 
@@ -44,30 +46,67 @@ defmodule TextcordWeb.ServerLive.Index do
   end
 
   defp check_unread(socket) do
-    if (connected?(socket)) do
+    if connected?(socket) do
       unreads =
         Channels.get_user_unread_servers(socket.assigns.current_user.id)
+
       assign(socket, unreads: unreads)
     else
       assign(socket, unreads: [])
     end
   end
 
-  @impl true
-  def handle_info({TextcordWeb.ServerLive.FormComponent, {:saved, server}}, socket) do
-    {:noreply, stream_insert(socket, :servers, server)}
+  defp subscribe_if_connected(socket) do
+    if connected?(socket) do
+      Servers.get_available_servers(socket.assigns.current_user)
+      |> Enum.each(& Endpoint.subscribe("server:#{&1.id}"))
+    end
+
+    socket
   end
 
   @impl true
+  def handle_info({TextcordWeb.ServerLive.FormComponent, {:saved, server}}, socket) do
+    Endpoint.broadcast("server:#{server.id}", "edited_server", server)
+    {:noreply, socket}
+  end
+
+  def handle_info({TextcordWeb.ServerLive.FormComponent, {:created, server}}, socket) do
+    Endpoint.subscribe("server:#{server.id}")
+    {:noreply, assign(socket, :servers, socket.assigns.servers ++ [server])}
+  end
+
   def handle_info({TextcordWeb.ServerLive.JoinServer, {:joined, server}}, socket) do
-    {:noreply, stream_insert(socket, :servers, server)}
+    Endpoint.subscribe("server:#{server.id}")
+    {:noreply, assign(socket, :servers, socket.assigns.servers ++ [server])}
+  end
+
+  def handle_info(%{event: "deleted_server", payload: server_id}, socket) do
+    servers = socket.assigns.servers
+    |> Enum.filter(& &1.id != server_id)
+    {:noreply, assign(socket, :servers, servers)}
+  end
+
+  def handle_info(%{event: "edited_server", payload: server}, socket) do
+    servers = socket.assigns.servers
+    |> Enum.map(fn s -> if s.id == server.id, do: server, else: s end)
+    {:noreply, assign(socket, :servers, servers)}
+  end
+
+  def handle_info(%{event: "unread", payload: %{server_id: server_id}}, socket) do
+    {:noreply,
+     socket |> assign(:unreads, [server_id | socket.assigns.unreads])}
+  end
+
+  def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
+    {:noreply, socket}
   end
 
   @impl true
   def handle_event("delete", %{"server_id" => id}, socket) do
     server = Servers.get_server!(id)
-    {:ok, _} = Servers.delete_server(server)
-
-    {:noreply, stream_delete(socket, :servers, server)}
+    Servers.delete_server(server)
+    Endpoint.broadcast("server:#{id}", "deleted_server", id)
+    {:noreply, socket}
   end
 end
