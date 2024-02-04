@@ -14,7 +14,8 @@ defmodule TextcordWeb.ChannelLive.Index do
   @impl true
   def handle_params(%{"channel_id" => channel_id}, _, socket) do
     channel = Channels.get_channel!(channel_id)
-    server = Servers.get_server!(channel.server_id) |> Textcord.Repo.preload([:channels])
+    server = Servers.get_server!(channel.server_id)
+    channels = Channels.get_server_channels(server.id)
     members = Servers.get_server_members(server.id) |> Enum.map(fn user -> user.email end)
     if connected?(socket), do: send(self(), {:fetch, channel_id})
 
@@ -23,6 +24,7 @@ defmodule TextcordWeb.ChannelLive.Index do
      |> assign(:channel, channel)
      |> assign(:server, server)
      |> assign(:members, members)
+     |> assign(:channels, channels)
      |> check_unread()
      |> subscribe_if_connected()
      |> init_presence()}
@@ -38,8 +40,14 @@ defmodule TextcordWeb.ChannelLive.Index do
     {:noreply, socket}
   end
 
-  def handle_info(%{event: "presence_diff", payload: _payload}, socket) do
-    {:noreply, socket}
+  def handle_info(%{event: "presence_diff", payload: payload}, socket) do
+    {:noreply,
+     socket
+     |> update_presence(payload)}
+  end
+
+  def handle_info(%{event: "created_channel", payload: channel}, socket) do
+    {:noreply, socket |> assign(:channels, [channel | socket.assigns.channels])}
   end
 
   def handle_info({:fetch, channel_id}, socket) do
@@ -55,7 +63,6 @@ defmodule TextcordWeb.ChannelLive.Index do
           time:
             message.inserted_at
             |> Time.to_string()
-
         }
       end)
 
@@ -76,6 +83,10 @@ defmodule TextcordWeb.ChannelLive.Index do
     end
   end
 
+  def handle_info(%{event: "edited_server", payload: server}, socket) do
+    {:noreply, assign(socket, :server, server)}
+  end
+
   defp check_unread(socket) do
     if connected?(socket) do
       Channels.mark_as_read(
@@ -85,7 +96,7 @@ defmodule TextcordWeb.ChannelLive.Index do
 
       unreads =
         Channels.get_server_unreads(
-          socket.assigns.server.channels,
+          socket.assigns.channels,
           socket.assigns.current_user.id
         )
         |> Enum.map(fn unread -> unread.channel_id end)
@@ -106,15 +117,41 @@ defmodule TextcordWeb.ChannelLive.Index do
   end
 
   defp init_presence(socket) do
-    if connected?(socket) do
-      Presence.track(
-        self(),
-        "server:#{socket.assigns.server.id}",
-        socket.assigns.current_user.email,
-        %{}
-      )
-    end
+    topic = "server:#{socket.assigns.server.id}"
 
-    socket
+    presence =
+      if connected?(socket) do
+        if !already_tracked?(socket, topic) do
+          Presence.track(
+            self(),
+            topic,
+            socket.assigns.current_user.email,
+            %{}
+          )
+        end
+
+        Presence.list(topic) |> Map.keys() |> MapSet.new()
+      else
+        MapSet.new()
+      end
+
+    assign(socket, presence: presence)
+  end
+
+  defp already_tracked?(socket, topic) do
+    Presence.list(topic)
+    |> Map.keys()
+    |> MapSet.new()
+    |> MapSet.member?(socket.assigns.current_user.email)
+  end
+
+  defp update_presence(socket, %{joins: j, leaves: l}) do
+    assign(socket,
+      presence:
+        Map.keys(j)
+        |> MapSet.new()
+        |> MapSet.union(socket.assigns.presence)
+        |> MapSet.difference(MapSet.new(Map.keys(l)))
+    )
   end
 end

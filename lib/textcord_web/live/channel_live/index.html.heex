@@ -10,7 +10,7 @@
     <!-- List of Channels -->
     <.table
       id="channels"
-      rows={@server.channels}
+      rows={@channels}
       row_click={fn channel -> JS.navigate(~p"/channels/#{channel}") end}
     >
       <:col :let={channel}>
@@ -48,12 +48,14 @@
     <div class="text-xl font-semibold mb-2 ">Members</div>
 
     <!-- List of Members -->
-    <ul class="list-none">
-      <%= for member <- @members do %>
-        <li class="mb-2">
-          <span><%= member %></span>
-        </li>
-      <% end %>
-    </ul>
+    <.table
+      id="members"
+      rows={@members}
+    >
+      <:col :let={member} >
+        <%= member %>
+        <%= if member in @presence, do: "(online)", else: "" %>
+      </:col>
+    </.table>
   </div>
 </div>

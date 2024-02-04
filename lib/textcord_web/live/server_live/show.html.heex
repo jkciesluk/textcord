@@ -1,6 +1,6 @@
 <.header>
-  Server <%= @server.id %>
-  <:subtitle>This is a server record from your database.</:subtitle>
+  Server <%= @server.name %>
+  <:subtitle><%= @server.description %></:subtitle>
   <:actions :if={@is_admin}>
     <.link patch={~p"/servers/#{@server}/show/edit"} phx-click={JS.push_focus()}>
       <.button>Edit server</.button>
@@ -13,22 +13,17 @@
   </:actions>
 </.header>
 
-<.list>
-  <:item title="Name"><%= @server.name %></:item>
-  <:item title="Description"><%= @server.description %></:item>
-</.list>
-
 <p>&nbsp;</p>
 <h2>Admin: <%= @server.user.email %></h2>
 <p>&nbsp;</p>
 
 <.table
   id="channels"
-  rows={@server.channels}
+  rows={@channels}
   row_click={fn channel -> JS.navigate(~p"/channels/#{channel}") end}
 >
 
-  <:col :let={channel} label="Name">
+  <:col :let={channel} label="Channels">
     <%= channel.name %>
     <%= if channel.id in @unreads, do: "!!!", else: "" %>
   </:col>
@@ -41,14 +36,15 @@
 
 
 
-<p>&nbsp;</p>
-<h2>Members</h2>
-<%= for member <- @members do %>
-  <li>
+<.table
+  id="members"
+  rows={@members}
+>
+  <:col :let={member} label="Members">
     <%= member %>
     <%= if member in @presence, do: "(online)", else: "" %>
-  </li>
-<% end %>
+  </:col>
+</.table>
 
 
 <.back navigate={~p"/servers"}>Back to servers</.back>

@@ -69,7 +69,7 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} class="flex flex-col w-full mx-auto mt-4" >
+    <div id={@id} class="flex flex-col w-full mx-auto mt-4 h-screen" >
       <div id="messages-container" class="border-2 flex-1 overflow-auto p-4 max-h-[65vh] w-full" phx-hook="ScrollToBottom">
         <ul class="list-group messages" phx-update="stream" id="messages-box">
           <%= for {_msg_id, msg} <- @streams.messages do %>

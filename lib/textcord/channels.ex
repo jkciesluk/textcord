@@ -239,4 +239,9 @@ defmodule Textcord.Channels do
     |> Enum.map(fn unread -> Repo.get!(Channel, unread.channel_id).server_id end)
     |> Enum.uniq()
   end
+
+  def get_server_channels(server_id) do
+    query = from(c in Channel, where: c.server_id == ^server_id)
+    Repo.all(query)
+  end
 end

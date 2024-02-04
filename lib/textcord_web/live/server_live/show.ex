@@ -14,7 +14,8 @@ defmodule TextcordWeb.ServerLive.Show do
 
   @impl true
   def handle_params(%{"server_id" => id}, _, socket) do
-    server = Servers.get_server!(id) |> Textcord.Repo.preload([:user, :channels])
+    server = Servers.get_server!(id) |> Textcord.Repo.preload([:user])
+    channels = Channels.get_server_channels(server.id)
     is_admin = socket.assigns.current_user.id == server.user_id
     members = Servers.get_server_members(server.id) |> Enum.map(fn user -> user.email end)
 
@@ -22,6 +23,7 @@ defmodule TextcordWeb.ServerLive.Show do
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
      |> assign(:server, server)
+     |> assign(:channels, channels)
      |> check_unread()
      |> assign(:is_admin, is_admin)
      |> assign(:members, members)
@@ -58,7 +60,7 @@ defmodule TextcordWeb.ServerLive.Show do
   defp check_unread(socket) do
     if (connected?(socket)) do
       unreads =
-        Channels.get_server_unreads(socket.assigns.server.channels, socket.assigns.current_user.id)
+        Channels.get_server_unreads(socket.assigns.channels, socket.assigns.current_user.id)
         |> Enum.map(fn unread -> unread.channel_id end)
 
       assign(socket, unreads: unreads)
@@ -79,6 +81,25 @@ defmodule TextcordWeb.ServerLive.Show do
      socket |> assign(:unreads, [channel_id | socket.assigns.unreads])}
   end
 
+  def handle_info({TextcordWeb.ChannelLive.ChannelFormComponent, {:created_channel, channel}}, socket) do
+    Endpoint.broadcast("server:#{socket.assigns.server.id}", "created_channel", channel)
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "created_channel", payload: channel}, socket) do
+    {:noreply,
+     socket |> assign(:channels, [channel | socket.assigns.channels])}
+  end
+
+  def handle_info({TextcordWeb.ServerLive.FormComponent, {:saved, server}}, socket) do
+    Endpoint.broadcast("server:#{server.id}", "edited_server", server)
+    {:noreply, socket}
+  end
+
+  def handle_info(%{event: "edited_server", payload: server}, socket) do
+    {:noreply, assign(socket, :server, server |> Textcord.Repo.preload([:user]))}
+  end
+
   defp update_presence(socket, %{joins: j, leaves: l}) do
     assign(socket,
       presence:
@@ -94,10 +115,8 @@ defmodule TextcordWeb.ServerLive.Show do
   defp subscribe_if_connected(%{assigns: %{topic: topic}} = socket) do
     if connected?(socket) do
       Endpoint.subscribe(topic)
-      assign(socket, chat_state: :subscribed)
-    else
-      assign(socket, chat_state: :unsubscribed)
     end
+    socket
   end
 
   defp page_title(:show), do: "Show Server"
