@@ -55,8 +55,7 @@ defmodule TextcordWeb.ChannelLive.Index do
           time:
             message.inserted_at
             |> Time.to_string()
-            |> String.split(".")
-            |> List.first()
+
         }
       end)
 

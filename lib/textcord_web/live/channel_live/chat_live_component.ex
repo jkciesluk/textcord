@@ -45,8 +45,7 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
       time:
         message.inserted_at
         |> Time.to_string()
-        |> String.split(".")
-        |> List.first()
+
     }
 
     TextcordWeb.Endpoint.broadcast("channel:" <> socket.assigns.channel.id, "new-message", new_message)
@@ -74,10 +73,13 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
       <div id="messages-container" class="border-2 flex-1 overflow-auto p-4 max-h-[65vh] w-full" phx-hook="ScrollToBottom">
         <ul class="list-group messages" phx-update="stream" id="messages-box">
           <%= for {_msg_id, msg} <- @streams.messages do %>
-            <li class="mb-4 pb-4 border-b border-gray-300">
+          <li class="mb-4 pb-4 border-b border-gray-300">
+            <div class="flex justify-between">
               <div class="font-bold mb-1"><%= msg.user %></div>
-              <div><%= msg.msg %></div>
-            </li>
+              <div class="text-gray-500 ml-2 justify-end"><%= msg.time %></div>
+            </div>
+            <div><%= msg.msg %></div>
+          </li>
           <% end %>
         </ul>
       </div>
