@@ -59,10 +59,15 @@ defmodule TextcordWeb.ServerLive.Index do
   defp subscribe_if_connected(socket) do
     if connected?(socket) do
       Servers.get_available_servers(socket.assigns.current_user)
-      |> Enum.each(& Endpoint.subscribe("server:#{&1.id}"))
+      |> Enum.each(& resubscribe(&1))
     end
 
     socket
+  end
+
+  defp resubscribe(server) do
+    Endpoint.unsubscribe("server:#{server.id}")
+    Endpoint.subscribe("server:#{server.id}")
   end
 
   @impl true

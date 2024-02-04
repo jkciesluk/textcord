@@ -3,7 +3,9 @@
   <!-- Left Sidebar: Channels -->
   <div class="flex-none w-1/6 p-4 border-r border-gray-300">
     <div class="mb-4">
-      <span class="text-xl font-semibold overflow-hidden max-w-full whitespace-nowrap"><%= @server.name %></span>
+      <span class="text-xl font-semibold overflow-hidden max-w-full whitespace-nowrap">
+        <.link navigate={~p"/servers/#{@server.id}"}><%= @server.name %></.link>
+      </span>
       <span class="block text-sm"><%= @server.description %></span>
     </div>
   

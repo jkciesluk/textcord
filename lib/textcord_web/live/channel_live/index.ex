@@ -109,6 +109,8 @@ defmodule TextcordWeb.ChannelLive.Index do
 
   defp subscribe_if_connected(%{assigns: %{channel: channel, server: server}} = socket) do
     if connected?(socket) do
+      Endpoint.unsubscribe("channel:#{channel.id}")
+      Endpoint.unsubscribe("server:#{server.id}")
       Endpoint.subscribe("channel:#{channel.id}")
       Endpoint.subscribe("server:#{server.id}")
     end

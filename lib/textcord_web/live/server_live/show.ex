@@ -114,6 +114,7 @@ defmodule TextcordWeb.ServerLive.Show do
 
   defp subscribe_if_connected(%{assigns: %{topic: topic}} = socket) do
     if connected?(socket) do
+      Endpoint.unsubscribe(topic)
       Endpoint.subscribe(topic)
     end
     socket
