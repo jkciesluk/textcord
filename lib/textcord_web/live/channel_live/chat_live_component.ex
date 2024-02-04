@@ -9,7 +9,6 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
     socket
     |> stream(:messages, [])
     |> assign(form: %{"text" => ""})
-    |> assign(scroll_to_bottom: true)
     |> then(&{:ok, &1})
   end
 
@@ -56,15 +55,11 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
     {:noreply,
      socket
      |> assign(form: %{socket.assigns.form | "text" => ""})
-     |> push_event("scroll-to-bottom", %{})}
+    }
   end
 
   def handle_event("update_text", %{"text" => text}, socket) do
     {:noreply, assign(socket, form: %{socket.assigns.form | "text" => text})}
-  end
-
-  def handle_event("scroll-to-bottom", _, socket) do
-    {:noreply, socket |> push_patch(view: ChatLiveComponent)}
   end
 
   defp update_unread(server_id, channel_id, user_id) do
@@ -75,8 +70,8 @@ defmodule TextcordWeb.ChannelLive.ChatLiveComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div id={@id} class="flex flex-col h-screen w-full mx-auto mt-4" phx-hook="scroll-to-bottom">
-      <div id="messages-container" class="border-2 flex-1 overflow-auto mb-4 p-4 max-h-[65vh] w-full">
+    <div id={@id} class="flex flex-col w-full mx-auto mt-4" >
+      <div id="messages-container" class="border-2 flex-1 overflow-auto p-4 max-h-[65vh] w-full" phx-hook="ScrollToBottom">
         <ul class="list-group messages" phx-update="stream" id="messages-box">
           <%= for {_msg_id, msg} <- @streams.messages do %>
             <li class="mb-4 pb-4 border-b border-gray-300">

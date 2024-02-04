@@ -1,12 +1,4 @@
-<script>
-  function scrollToBottom() {
-    var messagesContainer = document.getElementById('messages-container');
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
-  document.addEventListener('DOMContentLoaded', function () {
-    scrollToBottom();
-  });
-</script>
+
 <div class="flex flex-row min-h-screen">
   <!-- Left Sidebar: Channels -->
   <div class="flex-none w-1/6 p-4 border-r border-gray-300">
@@ -36,11 +28,11 @@
 
   <!-- Main Content: Chat and Members -->
   <div class="flex flex-col flex-grow w-2/3">
-    <div class="flex-1 p-4 border-b border-gray-200 mb-2 text-xl font-semibold ">
-      <%= @channel.name %>
-    </div>
     <!-- Channel Chat -->
-    <div id="messages-container" class="flex-1 p-4 border-b border-gray-300">
+    <div class="flex-1 p-4 border-b border-gray-300">
+      <div class="mb-2 text-xl font-semibold ">
+        <%= @channel.name %>
+      </div>
       <.live_component module={TextcordWeb.ChannelLive.ChatLiveComponent} 
         id="chat-live"
         channel={@channel}

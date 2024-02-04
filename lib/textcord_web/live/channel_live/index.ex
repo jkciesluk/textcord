@@ -30,8 +30,6 @@ defmodule TextcordWeb.ChannelLive.Index do
 
   @impl true
   def handle_info(%{event: "new-message", payload: message}, socket) do
-    Logger.info(handle_info: message)
-
     send_update(TextcordWeb.ChannelLive.ChatLiveComponent,
       id: "chat-live",
       new_message: message
@@ -45,7 +43,6 @@ defmodule TextcordWeb.ChannelLive.Index do
   end
 
   def handle_info({:fetch, channel_id}, socket) do
-    Logger.info(handle_info: "fetching messages")
     channel = Channels.get_channel!(channel_id) |> Textcord.Repo.preload(:messages)
     messages = channel.messages |> Enum.map(fn msg -> Textcord.Repo.preload(msg, :user) end)
 
