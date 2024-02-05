@@ -8,7 +8,7 @@ defmodule TextcordWeb.ChannelLive.ChannelFormComponent do
     <div>
       <.header>
         <%= @title %>
-        <:subtitle>Use this form to join new servers</:subtitle>
+        <:subtitle>Use this form to add new channel</:subtitle>
       </.header>
 
       <.simple_form
@@ -21,7 +21,7 @@ defmodule TextcordWeb.ChannelLive.ChannelFormComponent do
         <.input field={@form[:name] |> dbg()} type="text" label="Name" />
 
         <:actions>
-          <.button phx-disable-with="Saving...">Save Server</.button>
+          <.button phx-disable-with="Saving...">Add Channel</.button>
         </:actions>
       </.simple_form>
     </div>
