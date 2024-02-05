@@ -87,8 +87,13 @@ defmodule TextcordWeb.ServerLive.Show do
   end
 
   def handle_info(%{event: "created_channel", payload: channel}, socket) do
-    {:noreply,
-     socket |> assign(:channels, [channel | socket.assigns.channels])}
+    # check if this channel is already in the list
+    if Enum.member?(socket.assigns.channels, channel) do
+      {:noreply, socket}
+    else
+      {:noreply,
+       socket |> assign(:channels, socket.assigns.channels ++ [channel])}
+    end
   end
 
   def handle_info({TextcordWeb.ServerLive.FormComponent, {:saved, server}}, socket) do

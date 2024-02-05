@@ -47,7 +47,7 @@ defmodule TextcordWeb.ChannelLive.Index do
   end
 
   def handle_info(%{event: "created_channel", payload: channel}, socket) do
-    {:noreply, socket |> assign(:channels, [channel | socket.assigns.channels])}
+    {:noreply, socket |> assign(:channels, socket.assigns.channels ++ [channel])}
   end
 
   def handle_info({:fetch, channel_id}, socket) do
